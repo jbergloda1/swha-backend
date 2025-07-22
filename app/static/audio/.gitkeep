@@ -1,0 +1,2 @@
+# This file ensures the audio directory is tracked by git
+# Audio files will be generated here by the TTS service 
