@@ -1,362 +1,407 @@
 # SWHA Backend API
 
-A comprehensive FastAPI backend with video streaming, user authentication, database management, and AI-powered question answering.
+A comprehensive **Software with Human-AI (SWHA)** backend built with FastAPI, featuring advanced AI capabilities including question answering, text-to-speech, lip synchronization, video streaming, and cloud storage integration.
 
-## Features
+## 🌟 Key Features
 
-- 🚀 **FastAPI** - Modern, fast web framework for building APIs
-- 🔐 **Authentication** - JWT-based user authentication and authorization
+- 🤖 **AI Question Answering** - RoBERTa-based extractive QA system with GPU acceleration
+- 🎵 **Text-to-Speech** - High-quality voice synthesis using Kokoro library
+- 🎬 **Lip Synchronization** - Advanced lip sync capabilities using Sync.so technology
 - 🎥 **Video Streaming** - Upload, process, and stream videos with range support
-- 🗄️ **Database** - PostgreSQL with SQLAlchemy ORM
-- 📁 **File Upload** - Support for video and image uploads
-- 🔍 **Search** - Video search functionality
-- 📊 **Analytics** - Video view tracking
-- 🎯 **CORS** - Cross-origin resource sharing support
-- 🤖 **AI Question Answering** - RoBERTa-based extractive QA system
+- ☁️ **Cloud Storage** - AWS S3 integration with presigned URLs for secure file access
+- 🔐 **Authentication** - JWT-based user authentication and authorization
+- 🗄️ **Database Management** - PostgreSQL with SQLAlchemy ORM and Alembic migrations
+- 📁 **File Upload** - Support for video, audio, and image uploads
+- 🔍 **Search & Analytics** - Video search functionality and view tracking
+- 🎯 **CORS Support** - Cross-origin resource sharing for web applications
+- 🐳 **Containerization** - Full Docker deployment with Nginx reverse proxy
+- 📊 **Monitoring** - Health checks, logging, and performance monitoring
 
-## Tech Stack
+## 🚀 Quick Start
 
-- **FastAPI** - API framework
-- **PostgreSQL** - Database
-- **SQLAlchemy** - ORM
-- **Alembic** - Database migrations
-- **JWT** - Authentication
-- **OpenCV** - Video processing
-- **FFmpeg** - Video metadata extraction
-- **Uvicorn** - ASGI server
-- **Transformers** - Hugging Face transformers for AI
+### Option 1: Docker Deployment (Recommended)
+
+```bash
+# Clone and navigate to the project
+cd swha-backend
+
+# Quick deployment with Docker
+chmod +x quick-deploy.sh
+./quick-deploy.sh
+```
+
+### Option 2: Manual Setup
+
+```bash
+# 1. Create virtual environment
+python -m venv human-ai-venv
+source human-ai-venv/bin/activate  # On Windows: human-ai-venv\Scripts\activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure environment
+cp env.template .env
+# Edit .env with your configuration
+
+# 4. Setup database
+# Create PostgreSQL database and run migrations
+alembic upgrade head
+
+# 5. Start the application
+python main.py
+```
+
+## 🏗️ Architecture & Tech Stack
+
+### Core Technologies
+- **FastAPI** - Modern, fast web framework for building APIs
+- **PostgreSQL** - Advanced open-source relational database
+- **SQLAlchemy** - Python SQL toolkit and ORM
+- **Alembic** - Database migration tool
+- **Redis** - In-memory data structure store for caching
+- **JWT** - JSON Web Tokens for authentication
+
+### AI & Machine Learning
+- **Transformers** - Hugging Face transformers library
 - **PyTorch** - Deep learning framework
-- **RoBERTa** - Question answering model
+- **RoBERTa** - Question answering model (deepset/roberta-base-squad2)
+- **Kokoro** - High-quality text-to-speech synthesis
+- **Sync.so** - Advanced lip synchronization technology
 
-## Project Structure
+### Media Processing
+- **OpenCV** - Computer vision and video processing
+- **FFmpeg** - Video metadata extraction and processing
+- **Pillow** - Image processing library
+- **SoundFile** - Audio file I/O
+
+### DevOps & Deployment
+- **Docker** - Containerization platform
+- **Docker Compose** - Multi-container application management
+- **Nginx** - Web server and reverse proxy
+- **AWS S3** - Cloud storage integration
+- **Uvicorn** - ASGI web server
+
+## 📁 Project Structure
 
 ```
 swha-backend/
 ├── app/
 │   ├── api/
 │   │   ├── routes/
-│   │   │   ├── auth.py          # Authentication routes
+│   │   │   ├── auth.py          # Authentication endpoints
 │   │   │   ├── users.py         # User management
 │   │   │   ├── videos.py        # Video CRUD and streaming
 │   │   │   ├── upload.py        # File upload endpoints
-│   │   │   └── qa.py            # Question Answering API
-│   │   └── dependencies.py     # Route dependencies
+│   │   │   ├── qa.py            # Question Answering API
+│   │   │   ├── tts.py           # Text-to-Speech API
+│   │   │   └── lipsync.py       # Lip Synchronization API
+│   │   └── dependencies.py      # Route dependencies
 │   ├── core/
-│   │   ├── config.py           # Configuration settings
-│   │   └── security.py         # Security utilities
+│   │   ├── config.py            # Configuration settings
+│   │   └── security.py          # Security utilities
 │   ├── database/
-│   │   └── database.py         # Database connection
-│   ├── models/
-│   │   ├── user.py             # User model
-│   │   ├── video.py            # Video model
-│   │   └── qa.py               # QA History model
-│   ├── schemas/
-│   │   ├── user.py             # User Pydantic schemas
-│   │   ├── video.py            # Video Pydantic schemas
-│   │   └── qa.py               # QA Pydantic schemas
-│   ├── services/
-│   │   ├── video_service.py    # Video processing service
-│   │   └── qa_service.py       # Question Answering service
-│   └── static/                 # Static files (uploads)
-├── alembic/                    # Database migrations
-├── main.py                     # Application entry point
-├── requirements.txt            # Python dependencies
-├── alembic.ini                # Alembic configuration
-└── .env.example               # Environment variables example
+│   │   └── database.py          # Database connection
+│   ├── models/                  # SQLAlchemy models
+│   ├── schemas/                 # Pydantic schemas
+│   ├── services/                # Business logic services
+│   └── static/                  # Static files (uploads, audio, videos)
+├── alembic/                     # Database migrations
+├── nginx/                       # Nginx configuration
+├── examples/                    # Usage examples
+├── main.py                      # Application entry point
+├── docker-compose.yml           # Docker services configuration
+├── Dockerfile                   # Application container
+├── requirements.txt             # Python dependencies
+├── deploy.sh                    # Deployment script
+├── quick-deploy.sh              # Quick deployment script
+├── install-docker.sh            # Docker installation script
+├── .env.template               # Environment variables template
+├── DEPLOYMENT.md               # Detailed deployment guide
+├── TTS_README.md               # Text-to-Speech documentation
+├── LIPSYNC_README.md           # Lip Sync documentation
+└── S3_INTEGRATION.md           # S3 integration guide
 ```
 
-## Setup Instructions
+## 🔧 Configuration
 
-### 1. Clone and Navigate
+### Environment Variables
 
+Copy the template and configure:
 ```bash
-cd swha-backend
+cp env.template .env
 ```
 
-### 2. Create Virtual Environment
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-**Note**: The installation may take some time due to PyTorch and Transformers libraries. For GPU support, install CUDA-compatible PyTorch version.
-
-### 4. Environment Configuration
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` file with your configuration:
+Key configuration options:
 
 ```env
+# Server Configuration
+HOST=127.0.0.1
+PORT=8000
+DEBUG=False
+
 # Database
 DATABASE_URL=postgresql://username:password@localhost:5432/swha_db
 
 # Security
-SECRET_KEY=your-super-secret-key-here
+SECRET_KEY=your-super-secret-key-32-chars-minimum
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# AWS S3 (Optional)
+USE_S3_STORAGE=true
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+S3_BUCKET_NAME=swha-audio-bucket
+
+# AI Models
+QA_MODEL_NAME=deepset/roberta-base-squad2
+FORCE_CPU=false  # Set to true to disable GPU
+
+# CORS
+CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 ```
 
-### 5. Database Setup
+## 📚 API Documentation
 
-Create PostgreSQL database:
-
-```sql
-CREATE DATABASE swha_db;
-```
-
-Initialize Alembic and create tables:
-
-```bash
-alembic revision --autogenerate -m "Initial migration"
-alembic upgrade head
-```
-
-### 6. Run the Application
-
-```bash
-python main.py
-```
-
-Or with uvicorn directly:
-
-```bash
-uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-**Note**: First startup may take longer as the RoBERTa model (around 500MB) needs to be downloaded from Hugging Face.
-
-## API Endpoints
+### Base URL: `http://localhost:8000/api/v1`
 
 ### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login (form data)
+- `POST /auth/login-json` - Login (JSON)
 
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/login` - Login with form data
-- `POST /api/v1/auth/login-json` - Login with JSON
+### AI Question Answering
+- `POST /qa/answer` - Answer single question
+- `POST /qa/answer-batch` - Answer multiple questions
+- `POST /qa/answer-detailed` - Get detailed answer with probabilities
+- `POST /qa/demo` - Public demo (no auth required)
+- `GET /qa/stats` - Usage statistics
+- `GET /qa/history` - QA history
+- `GET /qa/model-info` - Model information
 
-### Users
+### Text-to-Speech
+- `POST /tts/generate` - Generate speech (full options)
+- `POST /tts/generate-simple` - Generate speech (simple)
+- `GET /tts/voices` - Available voices
+- `GET /tts/languages` - Supported languages
+- `DELETE /tts/cleanup/{user_id}` - Clean up user audio files
 
-- `GET /api/v1/users/me` - Get current user profile
-- `PUT /api/v1/users/me` - Update current user profile
-- `GET /api/v1/users/` - Get all users (admin only)
-- `GET /api/v1/users/{user_id}` - Get user by ID
-- `DELETE /api/v1/users/{user_id}` - Delete user (admin only)
+### Lip Synchronization
+- `POST /lipsync/create` - Create lipsync job
+- `POST /lipsync/create-from-tts` - Create from TTS output
+- `GET /lipsync/status/{job_id}` - Check job status
+- `GET /lipsync/result/{job_id}` - Get result
+- `DELETE /lipsync/cleanup/{user_id}` - Clean up user files
 
-### Videos
+### Video Management
+- `GET /videos/` - List videos (paginated)
+- `GET /videos/{video_id}` - Get video details
+- `GET /videos/{video_id}/stream` - Stream video
+- `PUT /videos/{video_id}` - Update video
+- `DELETE /videos/{video_id}` - Delete video
 
-- `GET /api/v1/videos/` - Get paginated video list
-- `GET /api/v1/videos/{video_id}` - Get video details
-- `PUT /api/v1/videos/{video_id}` - Update video
-- `DELETE /api/v1/videos/{video_id}` - Delete video
-- `GET /api/v1/videos/{video_id}/stream` - Stream video
+### File Upload
+- `POST /upload/video` - Upload video
+- `POST /upload/videos` - Upload multiple videos
+- `POST /upload/image` - Upload image
 
-### Upload
+### User Management
+- `GET /users/me` - Current user profile
+- `PUT /users/me` - Update profile
+- `GET /users/` - All users (admin)
+- `GET /users/{user_id}` - User by ID
+- `DELETE /users/{user_id}` - Delete user (admin)
 
-- `POST /api/v1/upload/video` - Upload single video
-- `POST /api/v1/upload/videos` - Upload multiple videos
-- `POST /api/v1/upload/image` - Upload image
+## 🎯 Usage Examples
 
-### Question Answering (AI)
-
-- `POST /api/v1/qa/answer` - Answer single question
-- `POST /api/v1/qa/answer-batch` - Answer multiple questions
-- `POST /api/v1/qa/answer-detailed` - Get detailed answer with probabilities
-- `GET /api/v1/qa/stats` - Get QA usage statistics
-- `GET /api/v1/qa/history` - Get QA history
-- `GET /api/v1/qa/model-info` - Get model information
-- `POST /api/v1/qa/demo` - Public demo endpoint (no auth)
-
-### Health
-
-- `GET /` - API status
-- `GET /health` - Health check
-
-## Usage Examples
-
-### Register User
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "john_doe",
-    "email": "john@example.com",
-    "password": "securepassword",
-    "full_name": "John Doe"
-  }'
-```
-
-### Login
+### AI Question Answering
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/auth/login-json" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "john_doe",
-    "password": "securepassword"
-  }'
-```
-
-### Question Answering
-
-```bash
-# Demo endpoint (no authentication required)
+# Demo endpoint (no authentication)
 curl -X POST "http://localhost:8000/api/v1/qa/demo" \
   -H "Content-Type: application/json" \
-  -d '{
-    "question": "What is the capital of France?",
-    "context": "France is a country in Western Europe. Its capital and largest city is Paris, which is located in the north-central part of the country."
-  }'
-```
-
-```bash
-# Authenticated endpoint
-curl -X POST "http://localhost:8000/api/v1/qa/answer" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
     "question": "What is machine learning?",
     "context": "Machine learning is a method of data analysis that automates analytical model building. It is a branch of artificial intelligence based on the idea that systems can learn from data, identify patterns and make decisions with minimal human intervention."
   }'
 ```
 
-### Upload Video
+### Text-to-Speech
 
 ```bash
+# Generate speech
+curl -X POST "http://localhost:8000/api/v1/tts/generate" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello world! This is a test of the TTS system.",
+    "voice": "af_heart",
+    "language_code": "a",
+    "speed": 1.0
+  }'
+```
+
+### Lip Synchronization
+
+```bash
+# Create lipsync from TTS
+curl -X POST "http://localhost:8000/api/v1/lipsync/create-from-tts" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "video_url": "https://example.com/video.mp4",
+    "tts_audio_url": "https://example.com/audio.wav",
+    "api_key": "your_sync_api_key"
+  }'
+```
+
+### Video Upload & Streaming
+
+```bash
+# Upload video
 curl -X POST "http://localhost:8000/api/v1/upload/video" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "file=@video.mp4" \
   -F "title=My Video" \
-  -F "description=Video description" \
+  -F "description=Test video" \
   -F "is_public=true"
+
+# Stream video with range support
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Range: bytes=0-1048576" \
+  "http://localhost:8000/api/v1/videos/1/stream"
 ```
 
-### Stream Video
+## 🚀 Deployment
+
+### Docker Deployment (Production)
+
+The project includes comprehensive deployment automation:
 
 ```bash
-curl "http://localhost:8000/api/v1/videos/1/stream" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  --output video.mp4
+# Quick deployment
+./quick-deploy.sh
+
+# Or use the full deployment script
+./deploy.sh up
+
+# Check status
+./deploy.sh status
+
+# View logs
+./deploy.sh logs
+
+# Update application
+./deploy.sh update
 ```
 
-## AI Question Answering
+### Manual Deployment
 
-The API includes a powerful question answering system using the **deepset/roberta-base-squad2** model from Hugging Face. This model can:
+For detailed deployment instructions, see:
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) - Complete Docker deployment guide
+- [`TTS_README.md`](TTS_README.md) - Text-to-Speech setup
+- [`LIPSYNC_README.md`](LIPSYNC_README.md) - Lip Sync configuration
+- [`S3_INTEGRATION.md`](S3_INTEGRATION.md) - AWS S3 setup
 
-- **Extract answers** from provided context passages
-- **Handle unanswerable questions** (returns appropriate response when answer isn't in context)
-- **Provide confidence scores** for answers
-- **Track answer positions** in the original text
-- **Support batch processing** of multiple questions
-- **Automatically use GPU** if available for faster inference
+### Production Checklist
 
-### Model Features
+- [ ] Set `DEBUG=False`
+- [ ] Generate strong `SECRET_KEY`
+- [ ] Configure PostgreSQL with secure credentials
+- [ ] Set up SSL/HTTPS with nginx
+- [ ] Configure CORS origins for your domains
+- [ ] Set up S3 bucket for file storage
+- [ ] Configure monitoring and logging
+- [ ] Set up backup strategy
+- [ ] Enable GPU acceleration for AI models (optional)
 
+## 🔧 AI Model Information
+
+### Question Answering Model
 - **Model**: RoBERTa-base fine-tuned on SQuAD 2.0
-- **Type**: Extractive Question Answering
+- **Size**: ~500MB
 - **Languages**: English
-- **Max Context Length**: 512 tokens
-- **Capabilities**: Answerable and unanswerable questions
+- **Max Context**: 512 tokens
+- **Features**: Extractive QA, handles unanswerable questions
+- **GPU Support**: Automatic detection and usage
 
-### Example Response
+### Text-to-Speech
+- **Engine**: Kokoro TTS
+- **Quality**: High-quality voice synthesis
+- **Languages**: Multiple language support
+- **Voices**: Various voice types available
+- **Features**: Speed control, multi-line processing
 
-```json
-{
-  "question": "What is the capital of France?",
-  "context": "France is a country in Western Europe. Its capital and largest city is Paris...",
-  "answer": "Paris",
-  "confidence": 0.9876,
-  "start_position": 65,
-  "end_position": 70,
-  "is_answerable": true,
-  "processing_time_ms": 45
-}
-```
+### Lip Synchronization
+- **Technology**: Sync.so API
+- **Models**: lipsync-2 (default), multiple available
+- **Sync Modes**: cut_off, loop, extend
+- **Input**: Video + audio files
+- **Output**: Synchronized video
 
-## Development
+## 📊 Performance & Monitoring
 
-### Database Migrations
+### API Performance
+- **First Request**: 2-3 seconds (model loading)
+- **Subsequent Requests**: 100-500ms
+- **GPU Acceleration**: 3-5x faster inference
+- **Memory Usage**: ~1.5GB for AI models
+- **Concurrent Support**: Multi-threaded processing
 
-Create new migration:
-
+### Health Monitoring
 ```bash
-alembic revision --autogenerate -m "Description of changes"
+# Application health
+curl http://localhost:8000/health
+
+# Service status (Docker)
+./deploy.sh status
+
+# Resource monitoring
+docker stats
 ```
 
-Apply migrations:
-
-```bash
-alembic upgrade head
-```
-
-### Running Tests
-
-```bash
-pytest
-```
-
-### Code Formatting
-
-```bash
-black .
-```
-
-## Production Deployment
-
-1. Set `DEBUG=False` in environment
-2. Use strong `SECRET_KEY`
-3. Configure PostgreSQL with proper credentials
-4. Set up reverse proxy (nginx)
-5. Use HTTPS
-6. Configure CORS origins properly
-7. Set up file storage (AWS S3, etc.)
-8. **GPU Setup**: For better QA performance, use GPU-enabled servers
-9. **Model Caching**: Consider using model caching for faster startup
-
-### GPU Support
-
-For GPU acceleration:
-
-1. Install CUDA-compatible PyTorch:
-   ```bash
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-   ```
-
-2. Verify GPU availability:
-   ```bash
-   curl "http://localhost:8000/api/v1/qa/model-info"
-   ```
-
-## API Documentation
-
-When running the server, visit:
-
+### API Documentation
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
-## Performance Notes
+## 🤝 Development
 
-- **First Request**: May take 2-3 seconds as the model loads into memory
-- **Subsequent Requests**: Typically 100-500ms depending on context length
-- **GPU Acceleration**: 3-5x faster inference with GPU
-- **Memory Usage**: ~1.5GB RAM for the model
-- **Concurrent Requests**: Supported with proper threading
+### Local Development Setup
 
-## Contributing
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+
+# Run tests
+pytest
+
+# Code formatting
+black .
+
+# Database migrations
+alembic revision --autogenerate -m "Description"
+alembic upgrade head
+```
+
+### Contributing
 
 1. Fork the repository
-2. Create feature branch
-3. Make changes
-4. Add tests
-5. Submit pull request
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
-## License
+## 📄 License
 
-MIT License 
+MIT License - see LICENSE file for details.
+
+## 🆘 Support
+
+For detailed setup and usage instructions, refer to:
+- [Deployment Guide](DEPLOYMENT.md)
+- [TTS Documentation](TTS_README.md)
+- [Lipsync Documentation](LIPSYNC_README.md)
+- [S3 Integration Guide](S3_INTEGRATION.md)
+
+For issues and questions, please create an issue in the repository. 
