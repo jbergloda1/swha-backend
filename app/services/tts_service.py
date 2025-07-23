@@ -20,22 +20,106 @@ class TTSService:
         self.audio_dir = "app/static/audio"
         self.s3_service = get_s3_service()
         self._ensure_audio_directory()
+        self._setup_spacy_environment()
     
     def _ensure_audio_directory(self):
         """Ensure audio directory exists."""
         os.makedirs(self.audio_dir, exist_ok=True)
         logger.info(f"Audio directory ensured: {self.audio_dir}")
     
+    def _setup_spacy_environment(self):
+        """Setup spaCy environment variables for proper model loading."""
+        # Set up spaCy data directories
+        spacy_dirs = [
+            "/home/app/.cache/spacy",
+            "/app/.cache/spacy",
+            os.path.expanduser("~/.cache/spacy")
+        ]
+        
+        # Create directories if they don't exist
+        for spacy_dir in spacy_dirs:
+            try:
+                os.makedirs(spacy_dir, exist_ok=True)
+            except Exception as e:
+                logger.warning(f"Could not create spaCy directory {spacy_dir}: {e}")
+        
+        # Set environment variables
+        if not os.environ.get('SPACY_DATA'):
+            os.environ['SPACY_DATA'] = "/home/app/.cache/spacy"
+        
+        logger.info(f"spaCy environment setup completed. SPACY_DATA: {os.environ.get('SPACY_DATA')}")
+    
+    def _download_spacy_models_if_needed(self):
+        """Download spaCy models if they're not available."""
+        try:
+            import spacy
+            
+            models_to_check = ['en_core_web_sm', 'en_core_web_md']
+            
+            for model in models_to_check:
+                try:
+                    spacy.load(model)
+                    logger.info(f"spaCy model {model} is available")
+                except OSError:
+                    logger.warning(f"spaCy model {model} not found, attempting to download...")
+                    try:
+                        spacy.cli.download(model)
+                        logger.info(f"Successfully downloaded spaCy model: {model}")
+                    except Exception as e:
+                        logger.warning(f"Failed to download spaCy model {model}: {e}")
+                        # Try alternative download method
+                        try:
+                            os.system(f"python -m spacy download {model}")
+                            logger.info(f"Downloaded {model} via alternative method")
+                        except Exception as e2:
+                            logger.error(f"All download methods failed for {model}: {e2}")
+                            
+        except ImportError:
+            logger.error("spaCy not available")
+    
     def _get_pipeline(self, language_code: str) -> KPipeline:
-        """Get or create pipeline for specific language."""
+        """Get or create pipeline for specific language with error handling."""
         if language_code not in self.pipelines:
             logger.info(f"Loading TTS pipeline for language: {language_code}")
-            try:
-                self.pipelines[language_code] = KPipeline(lang_code=language_code)
-                logger.info(f"TTS pipeline loaded successfully for language: {language_code}")
-            except Exception as e:
-                logger.error(f"Error loading TTS pipeline for {language_code}: {str(e)}")
-                raise e
+            
+            max_retries = 3
+            retry_delay = 2
+            
+            for attempt in range(max_retries):
+                try:
+                    # Setup environment before attempting to load
+                    self._setup_spacy_environment()
+                    
+                    # Try to download spaCy models if needed
+                    if attempt > 0:  # Only try downloading on retry
+                        self._download_spacy_models_if_needed()
+                    
+                    # Initialize Kokoro pipeline
+                    self.pipelines[language_code] = KPipeline(lang_code=language_code)
+                    logger.info(f"TTS pipeline loaded successfully for language: {language_code}")
+                    break
+                    
+                except Exception as e:
+                    logger.warning(f"Attempt {attempt + 1}/{max_retries} failed to load TTS pipeline for {language_code}: {str(e)}")
+                    
+                    if attempt < max_retries - 1:
+                        logger.info(f"Retrying in {retry_delay} seconds...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                    else:
+                        # Final attempt failed
+                        error_msg = f"Failed to load TTS pipeline for {language_code} after {max_retries} attempts: {str(e)}"
+                        logger.error(error_msg)
+                        
+                        # Provide helpful error message
+                        if "spacy" in str(e).lower() or "en_core_web" in str(e):
+                            error_msg = (
+                                f"TTS initialization failed due to missing spaCy models. "
+                                f"This usually happens when models weren't properly downloaded during Docker build. "
+                                f"Original error: {str(e)}"
+                            )
+                        
+                        raise Exception(error_msg)
         
         return self.pipelines[language_code]
     
@@ -66,15 +150,49 @@ class TTSService:
         try:
             s3_key = self._create_s3_key(session_id, filename, user_id)
             
-            # Add metadata
+            # Helper function to ensure ASCII-safe metadata
+            def make_ascii_safe(value: str, max_length: int = 100) -> str:
+                """Convert string to ASCII-safe format for S3 metadata."""
+                if not isinstance(value, str):
+                    value = str(value)
+                
+                # Truncate if too long
+                if len(value) > max_length:
+                    value = value[:max_length]
+                
+                # Remove or replace non-ASCII characters
+                try:
+                    # Try to encode as ASCII
+                    value.encode('ascii')
+                    return value
+                except UnicodeEncodeError:
+                    # Replace non-ASCII characters with safe alternatives
+                    import unicodedata
+                    # Normalize and remove accents
+                    value = unicodedata.normalize('NFKD', value)
+                    value = ''.join(c for c in value if ord(c) < 128)
+                    # If still problematic, use safe characters only
+                    if not value or not value.strip():
+                        value = "generated_content"
+                    return value
+            
+            # Add metadata with ASCII-safe values
             file_metadata = {
-                "session_id": session_id,
-                "user_id": str(user_id) if user_id else "anonymous",
-                "generated_at": str(time.time()),
-                "filename": filename
+                "session-id": make_ascii_safe(session_id, 50),
+                "user-id": make_ascii_safe(str(user_id) if user_id else "anonymous", 20),
+                "generated-at": str(int(time.time())),
+                "filename": make_ascii_safe(filename, 100)
             }
+            
+            # Add custom metadata if provided, ensuring ASCII safety
             if metadata:
-                file_metadata.update(metadata)
+                for key, value in metadata.items():
+                    # Convert key to ASCII-safe format (S3 metadata keys must be ASCII)
+                    safe_key = make_ascii_safe(key.replace('_', '-').lower(), 30)
+                    safe_value = make_ascii_safe(str(value), 200)
+                    file_metadata[safe_key] = safe_value
+            
+            logger.debug(f"S3 metadata prepared: {file_metadata}")
             
             # Upload and get presigned URL
             presigned_url = self.s3_service.upload_and_get_presigned_url(
@@ -177,36 +295,42 @@ class TTSService:
                 
                 # Upload to S3 if enabled
                 if use_s3_storage:
-                    presigned_url, s3_key = self._upload_to_s3_and_get_presigned_url(
-                        local_file_path=local_filepath,
-                        session_id=session_id,
-                        filename=filename,
-                        user_id=user_id,
-                        expiry_seconds=expiry_seconds,
-                        metadata={
-                            "voice": voice,
-                            "language_code": language_code,
-                            "speed": str(speed),
-                            "segment_index": str(i),
-                            "graphemes": graphemes[:100]  # Truncate for metadata
-                        }
-                    )
-                    
-                    if presigned_url:
-                        segment.presigned_url = presigned_url
-                        segment.s3_key = s3_key
-                        segment.expires_at = presigned_urls_expire_at
-                        audio_files.append(presigned_url)
+                    try:
+                        presigned_url, s3_key = self._upload_to_s3_and_get_presigned_url(
+                            local_file_path=local_filepath,
+                            session_id=session_id,
+                            filename=filename,
+                            user_id=user_id,
+                            expiry_seconds=expiry_seconds,
+                            metadata={
+                                "voice": voice,
+                                "language_code": language_code,
+                                "speed": str(speed),
+                                "segment_index": str(i),
+                                "graphemes": graphemes[:100] if graphemes else "unknown"  # Ensure safe truncation
+                            }
+                        )
                         
-                        # Optionally delete local file after successful S3 upload
-                        if settings.DEBUG is False:  # Keep local files in debug mode
-                            try:
-                                os.remove(local_filepath)
-                                logger.debug(f"Deleted local file after S3 upload: {local_filepath}")
-                            except Exception as e:
-                                logger.warning(f"Could not delete local file: {e}")
-                    else:
-                        logger.warning(f"S3 upload failed for segment {i}, falling back to local URL")
+                        if presigned_url:
+                            segment.presigned_url = presigned_url
+                            segment.s3_key = s3_key
+                            segment.expires_at = presigned_urls_expire_at
+                            audio_files.append(presigned_url)
+                            
+                            # Optionally delete local file after successful S3 upload
+                            if settings.DEBUG is False:  # Keep local files in debug mode
+                                try:
+                                    os.remove(local_filepath)
+                                    logger.debug(f"Deleted local file after S3 upload: {local_filepath}")
+                                except Exception as e:
+                                    logger.warning(f"Could not delete local file: {e}")
+                        else:
+                            logger.warning(f"S3 upload failed for segment {i}, falling back to local URL")
+                            audio_files.append(local_url)
+                            
+                    except Exception as s3_error:
+                        logger.error(f"S3 upload error for segment {i}: {str(s3_error)}")
+                        logger.info(f"Falling back to local storage for segment {i}")
                         audio_files.append(local_url)
                 else:
                     audio_files.append(local_url)

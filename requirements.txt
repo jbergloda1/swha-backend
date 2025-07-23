@@ -26,3 +26,8 @@ soundfile
 syncsdk
 boto3
 numpy
+openai-whisper
+unidic
+fugashi[unidic-lite]
+setuptools-rust
+httpx

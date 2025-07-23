@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-from app.api.routes import auth, users, videos, upload, qa, tts, lipsync
+from app.api.routes import auth, users, videos, upload, qa, tts, lipsync, stt
 from app.database.database import engine, Base
 from app.core.config import settings
 
@@ -38,6 +38,7 @@ app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
 app.include_router(qa.router, prefix="/api/v1/qa", tags=["question-answering"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["text-to-speech"])
 app.include_router(lipsync.router, prefix="/api/v1/lipsync", tags=["lipsync"])
+app.include_router(stt.router, prefix="/api/v1/stt", tags=["speech-to-text"])
 
 @app.get("/")
 async def root():
@@ -52,6 +53,7 @@ async def root():
             "AI Question Answering (RoBERTa)",
             "Text-to-Speech (Kokoro)",
             "Lip Sync (Sync.so)",
+            "Speech-to-Text (Whisper)",
             "Database Management"
         ],
         "docs": {

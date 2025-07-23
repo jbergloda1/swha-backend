@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     QA_MODEL_NAME: str = "deepset/roberta-base-squad2"
     HF_CACHE_DIR: Optional[str] = None
     FORCE_CPU: bool = False
+
+    # Speech-to-Text (Whisper) configuration
+    STT_MODEL_NAME: str = "base"  # Options: tiny, base, small, medium, large
+    STT_MODEL_DIR: Optional[str] = None # Directory to cache STT models
     
     # Email configuration (optional)
     SMTP_HOST: Optional[str] = None

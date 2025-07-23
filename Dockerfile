@@ -7,7 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     TRANSFORMERS_CACHE=/app/.cache/huggingface \
-    HF_HOME=/app/.cache/huggingface
+    HF_HOME=/app/.cache/huggingface \
+    SPACY_DATA=/app/.cache/spacy
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -29,16 +30,31 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy initialization script
+COPY init_models.py .
+
+# Run model initialization script
+# This downloads all required models and sets up cache directories
+RUN python init_models.py
+
 # Copy application code
 COPY . .
 
-# Create necessary directories
+# Create necessary directories and set permissions
 RUN mkdir -p app/static/uploads app/static/audio app/static/videos \
     && mkdir -p /app/.cache/huggingface \
-    && chown -R app:app /app
+    && mkdir -p /app/.cache/spacy \
+    && mkdir -p /home/app/.cache/spacy \
+    && chown -R app:app /app \
+    && chown -R app:app /home/app \
+    && chmod -R 755 /app/.cache
 
 # Switch to app user
 USER app
+
+# Set environment variables for app user
+ENV HOME=/home/app \
+    SPACY_DATA=/home/app/.cache/spacy
 
 # Expose port
 EXPOSE 8000

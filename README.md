@@ -68,6 +68,7 @@ python main.py
 - **RoBERTa** - Question answering model (deepset/roberta-base-squad2)
 - **Kokoro** - High-quality text-to-speech synthesis
 - **Sync.so** - Advanced lip synchronization technology
+- **Whisper** - High-performance speech-to-text from OpenAI
 
 ### Media Processing
 - **OpenCV** - Computer vision and video processing
@@ -95,7 +96,8 @@ swha-backend/
 │   │   │   ├── upload.py        # File upload endpoints
 │   │   │   ├── qa.py            # Question Answering API
 │   │   │   ├── tts.py           # Text-to-Speech API
-│   │   │   └── lipsync.py       # Lip Synchronization API
+│   │   │   ├── lipsync.py       # Lip Synchronization API
+│   │   │   └── stt.py           # Speech-to-Text API
 │   │   └── dependencies.py      # Route dependencies
 │   ├── core/
 │   │   ├── config.py            # Configuration settings
@@ -157,6 +159,9 @@ S3_BUCKET_NAME=swha-audio-bucket
 QA_MODEL_NAME=deepset/roberta-base-squad2
 FORCE_CPU=false  # Set to true to disable GPU
 
+# Speech-to-Text
+STT_MODEL_NAME=base # Options: tiny, base, small, medium, large
+
 # CORS
 CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 ```
@@ -185,6 +190,9 @@ CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 - `GET /tts/voices` - Available voices
 - `GET /tts/languages` - Supported languages
 - `DELETE /tts/cleanup/{user_id}` - Clean up user audio files
+
+### Speech-to-Text (New)
+- `POST /stt/transcribe` - Transcribe audio file to text. Accepts either a direct file upload or a URL.
 
 ### Lip Synchronization
 - `POST /lipsync/create` - Create lipsync job
@@ -239,6 +247,20 @@ curl -X POST "http://localhost:8000/api/v1/tts/generate" \
     "language_code": "a",
     "speed": 1.0
   }'
+```
+
+### Speech-to-Text
+
+```bash
+# Option 1: Transcribe an audio file via direct upload
+curl -X POST "http://localhost:8000/api/v1/stt/transcribe" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "file=@/path/to/your/audio.mp3"
+
+# Option 2: Transcribe an audio file via URL
+curl -X POST "http://localhost:8000/api/v1/stt/transcribe" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "audio_url=https://example.com/audio.wav"
 ```
 
 ### Lip Synchronization
@@ -332,6 +354,12 @@ For detailed deployment instructions, see:
 - **Voices**: Various voice types available
 - **Features**: Speed control, multi-line processing
 
+### Speech-to-Text
+- **Engine**: OpenAI Whisper
+- **Models**: tiny, base, small, medium, large
+- **Features**: High accuracy, multi-language support
+- **GPU Support**: Automatic detection and usage
+
 ### Lip Synchronization
 - **Technology**: Sync.so API
 - **Models**: lipsync-2 (default), multiple available
@@ -401,6 +429,7 @@ MIT License - see LICENSE file for details.
 For detailed setup and usage instructions, refer to:
 - [Deployment Guide](DEPLOYMENT.md)
 - [TTS Documentation](TTS_README.md)
+- [TTS Troubleshooting Guide](TTS_TROUBLESHOOTING.md) - **Essential for Docker permission issues**
 - [Lipsync Documentation](LIPSYNC_README.md)
 - [S3 Integration Guide](S3_INTEGRATION.md)
 
