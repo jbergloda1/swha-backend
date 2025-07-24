@@ -434,3 +434,96 @@ For detailed setup and usage instructions, refer to:
 - [S3 Integration Guide](S3_INTEGRATION.md)
 
 For issues and questions, please create an issue in the repository. 
+
+# 🎤 Real-time Speech-to-Text WebSocket API
+
+## Overview
+This backend provides a real-time speech-to-text (STT) API using FastAPI, Whisper, and WebSocket streaming. It supports continuous audio streaming from the frontend and returns live transcription results.
+
+---
+
+## 🚀 Quickstart for Frontend Integration
+
+### 1. **Authentication**
+- Obtain a JWT access token via the `/api/v1/auth/login` endpoint.
+- Pass the token as a query parameter when connecting to the WebSocket:
+  ```
+  ws://<BACKEND_HOST>/api/v1/stt/ws/transcribe?token=<ACCESS_TOKEN>
+  ```
+
+### 2. **WebSocket Message Protocol**
+- **Text message** `"start_recording"`: Start a new session
+- **Binary message** (ArrayBuffer/Blob): Audio chunk (WebM/Opus or WAV)
+- **Text message** `"stop_recording"`: End session and get final result
+
+#### **Server Responses**
+- `{ "type": "connected", ... }`: Connection ready
+- `{ "type": "recording_started" }`: Session started
+- `{ "type": "chunk_received", ... }`: Audio chunk acknowledged
+- `{ "type": "partial_transcription", "text": ... }`: Real-time result
+- `{ "type": "session_complete", "full_text": ... }`: Final result
+
+### 3. **Frontend Example (JavaScript)**
+```js
+const token = 'YOUR_JWT_TOKEN';
+const ws = new WebSocket(`ws://localhost:8000/api/v1/stt/ws/transcribe?token=${token}`);
+
+ws.onopen = () => {
+  ws.send('start_recording');
+  // Start sending audio chunks from MediaRecorder...
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type === 'partial_transcription') {
+    console.log('Live:', data.text);
+  } else if (data.type === 'session_complete') {
+    console.log('Final:', data.full_text);
+  }
+};
+
+// To send audio chunk:
+// ws.send(audioBuffer);
+// To stop:
+// ws.send('stop_recording');
+```
+
+### 4. **Audio Capture (Browser)**
+```js
+const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+recorder.ondataavailable = (e) => {
+  if (e.data.size > 0) e.data.arrayBuffer().then(buf => ws.send(buf));
+};
+recorder.start(100); // 100ms chunks
+```
+
+---
+
+## 🛡️ Notes & Best Practices
+- **Use native browser WebSocket API** (not `websocket-client`)
+- **Send audio as binary (ArrayBuffer/Blob)**
+- **Chunk size**: 1-4KB, every 100-500ms for best latency
+- **Sample rate**: 16kHz mono recommended
+- **Token expires**: Always use a fresh JWT
+- **Monitor `chunk_received` and `partial_transcription` for feedback**
+
+---
+
+## 🧑‍💻 Backend Tech Stack
+- FastAPI + Uvicorn
+- Whisper (OpenAI)
+- WebSocket streaming
+- JWT authentication
+
+---
+
+## 📞 Support
+- If you encounter issues:
+  1. Check token validity
+  2. Verify WebSocket URL and query params
+  3. Ensure audio is sent as binary
+  4. Check browser console and backend logs
+
+---
+
+**Status:** ✅ Ready for real-time frontend integration 
