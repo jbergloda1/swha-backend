@@ -64,12 +64,13 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app/.cache /app/.cache
 
-# Copy application code
+# Copy application code FIRST
 COPY . .
 
-# Create necessary directories and set permissions for the non-root user
+# NOW, create directories and set final permissions
 RUN mkdir -p app/static/uploads app/static/audio app/static/videos /home/app/.cache/spacy \
-    && chown -R app:app /app /home/app
+    && chown -R app:app /app /home/app \
+    && chmod -R u+rwX app/static/audio
 
 # Switch to the non-root user
 USER app

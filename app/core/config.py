@@ -3,14 +3,29 @@ from typing import Optional, List
 import os
 from pydantic import Field
 
+# Helper to detect if running inside a Docker container
+def is_in_docker() -> bool:
+    """Check if the application is running inside a Docker container."""
+    # This checks for the existence of a file created by Docker.
+    return os.path.exists('/.dockerenv')
+
 class Settings(BaseSettings):
     # Server configuration
     HOST: str = "127.0.0.1"
     PORT: int = 8000
     DEBUG: bool = True
     
-    # Database configuration
-    DATABASE_URL: str = "postgresql://user:password@localhost/swha_db"
+    # Database configuration - Dynamically set based on environment
+    DB_HOST: str = "db" if is_in_docker() else "localhost"
+    DB_PORT: int = 5432
+    DB_USER: str = "swha_user"
+    DB_PASSWORD: str = "swha_password"
+    DB_NAME: str = "swha_db"
+    
+    DATABASE_URL: str = Field(
+        default=f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        validate_default=False  # Re-evaluate on model instantiation
+    )
     
     # Security configuration
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
