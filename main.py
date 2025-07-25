@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-from app.api.routes import auth, users, videos, upload, qa, tts, lipsync, stt, captioning
+from app.api.routes import auth, users, videos, upload, qa, tts, lipsync, stt, captioning, dashboard, table
 from app.database.database import engine, Base
 from app.core.config import settings
 
@@ -40,6 +40,8 @@ app.include_router(tts.router, prefix="/api/v1/tts", tags=["text-to-speech"])
 app.include_router(lipsync.router, prefix="/api/v1/lipsync", tags=["lipsync"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["speech-to-text"])
 app.include_router(captioning.router, prefix="/api/v1/captioning", tags=["image-captioning"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(table.router, prefix="/api/v1/table", tags=["table"])
 
 @app.get("/")
 async def root():
